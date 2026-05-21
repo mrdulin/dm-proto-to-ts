@@ -1,0 +1,33 @@
+{
+  "name": "proto-to-ts",
+  "version": "0.1.0",
+  "description": "MCP server for generating TypeScript from .proto files into a user-specified output directory.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "proto-to-ts": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/index.ts",
+    "_gen_proto": "node ./scripts/gen-proto.mjs",
+    "start": "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "keywords": [
+    "mcp",
+    "proto",
+    "typescript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "ts-proto": "^1.181.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
