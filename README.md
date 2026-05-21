@@ -1,57 +1,59 @@
 # proto-to-ts
 
-一个基于 TypeScript 的 `stdio` MCP Server，用来读取用户指定的 `.proto` 文件路径，在临时 `proto/` 目录里执行项目自身的 `npm run _gen_proto`，并把生成的 TypeScript 文件写入用户指定目录。生成完成后会删除临时目录。
+A TypeScript `stdio` MCP server that reads a user-provided `.proto` file path, runs `npm run _gen_proto` in a temporary `proto/` directory, and writes the generated TypeScript file into a user-specified output directory. Temporary proto and generated directories are removed after completion.
 
-## 功能
+## Install
 
-- 接收 `.proto` 文件路径
-- 接收用户指定的 TS 输出目录
-- 内部固定执行 `npm run _gen_proto`
-- 使用项目根目录下的 `protoc.exe` 与项目本地安装的 `ts-proto`
-- 不在项目内部保留 `proto/` 或生成产物
-- 将生成后的 `.ts` 文件写入用户指定目录
+```bash
+npm install @d-matrix/proto-to-ts
+```
 
-## 安装
+Requirements:
+
+- Node.js 18 or newer
+- `protoc.exe` placed in the package root on Windows deployments
+
+## Features
+
+- Accepts a `.proto` file path
+- Accepts a user-specified TypeScript output directory
+- Internally runs `npm run _gen_proto`
+- Uses `protoc.exe` from the package root together with local `ts-proto`
+- Does not keep `proto/` or generated artifacts inside the project
+- Writes the generated `.ts` file into the requested output directory
+
+## Local Development
 
 ```bash
 npm install
 npm run build
-```
-
-额外要求：
-
-- Windows 环境下需要在项目根目录放置 `protoc.exe`
-
-## 启动
-
-```bash
 npm start
 ```
 
-开发模式：
+Development mode:
 
 ```bash
 npm run dev
 ```
 
-## 可用工具
+## MCP Tool
 
 ### `proto_to_ts`
 
-输入参数：
+Input arguments:
 
-- `proto_file_name`: `.proto` 文件地址，可以是绝对路径或相对路径
-- `ts_output_dir`: 生成后的 `.ts` 文件输出目录
+- `proto_file_name`: `.proto` file path, absolute or relative
+- `ts_output_dir`: output directory for the generated `.ts` file
 
-行为：
+Behavior:
 
-1. 读取用户指定的 `.proto` 文件
-2. 在临时目录中执行内部固定命令 `npm run _gen_proto`
-3. 直接调用 `<project-root>/protoc.exe`，配合 `ts-proto` 插件生成 `<name>.ts`
-4. 把生成结果写入 `ts_output_dir`
-5. 删除临时 `proto/` 和临时生成目录
+1. Reads the user-provided `.proto` file
+2. Runs the internal `npm run _gen_proto` command in temporary directories
+3. Calls `<package-root>/protoc.exe` with the `ts-proto` plugin to generate `<name>.ts`
+4. Writes the result into `ts_output_dir`
+5. Deletes the temporary `proto/` and generated directories
 
-## MCP 配置示例
+## MCP Client Example
 
 ```json
 {
@@ -59,9 +61,24 @@ npm run dev
     "proto-to-ts": {
       "command": "node",
       "args": [
-        "D:\\workspace\\innodealing\\dm-proto-to-ts\\dist\\index.js"
-      ]
+        "C:\\path\\to\\node_modules\\@d-matrix\\proto-to-ts\\dist\\index.js"
+      ],
+      "cwd": "C:\\path\\to\\node_modules\\@d-matrix\\proto-to-ts"
     }
   }
 }
 ```
+
+## Example Tool Call
+
+```json
+{
+  "name": "proto_to_ts",
+  "arguments": {
+    "proto_file_name": "C:\\path\\to\\proto\\ping.proto",
+    "ts_output_dir": "C:\\path\\to\\output"
+  }
+}
+```
+
+The tool returns the final output file path and writes the generated TypeScript file into the requested directory.

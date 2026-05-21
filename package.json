@@ -1,5 +1,5 @@
 {
-  "name": "proto-to-ts",
+  "name": "@d-matrix/proto-to-ts",
   "version": "0.1.0",
   "description": "MCP server for generating TypeScript from .proto files into a user-specified output directory.",
   "type": "module",
@@ -7,10 +7,18 @@
   "bin": {
     "proto-to-ts": "./dist/index.js"
   },
+  "files": [
+    "dist",
+    "scripts",
+    "protoc.exe",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsx src/index.ts",
     "_gen_proto": "node ./scripts/gen-proto.mjs",
+    "prepublishOnly": "npm run build",
     "start": "node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
@@ -20,6 +28,20 @@
     "typescript"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrdulin/dm-proto-to-ts.git"
+  },
+  "homepage": "https://github.com/mrdulin/dm-proto-to-ts#readme",
+  "bugs": {
+    "url": "https://github.com/mrdulin/dm-proto-to-ts/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
     "zod": "^3.25.76"
