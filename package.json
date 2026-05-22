@@ -49,12 +49,12 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.5",
-    "zod": "^3.25.76"
+    "zod": "^3.25.76",
+    "ts-proto": "^1.181.2"
   },
   "devDependencies": {
     "@types/node": "^22.15.30",
     "cnpm": "^9.4.0",
-    "ts-proto": "^1.181.2",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
   }
