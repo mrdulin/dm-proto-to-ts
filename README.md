@@ -2,7 +2,7 @@
 
 A TypeScript `stdio` MCP server that reads a user-provided `.proto` file path, runs `npm run _gen_proto` in a temporary `proto/` directory, and writes the generated TypeScript file into a user-specified output directory. Temporary proto and generated directories are removed after completion.
 
-## Install
+## Package
 
 ```bash
 npm install @d-matrix/proto-to-ts
@@ -21,6 +21,36 @@ Requirements:
 - Uses `protoc.exe` from the package root together with local `ts-proto`
 - Does not keep `proto/` or generated artifacts inside the project
 - Writes the generated `.ts` file into the requested output directory
+
+## Usage
+
+### Prerequisites
+
+- Node.js 18 or higher is required.
+
+### Desktop Applications (stdio transport)
+
+To use with Desktop APP, such as Claude, VSCode, Cline, Cherry Studio, and so on, add the MCP server config below.
+
+On Window system:
+
+```json
+{
+  "mcpServers": {
+    "proto-to-ts": {
+      "command": "cmd",
+      "args": [
+        "/c",
+        "npx",
+        "-y",
+        "-p",
+        "@d-matrix/proto-to-ts",
+        "proto-to-ts"
+      ]
+    }
+  }
+}
+```
 
 ## Local Development
 
@@ -52,22 +82,6 @@ Behavior:
 3. Calls `<package-root>/protoc.exe` with the `ts-proto` plugin to generate `<name>.ts`
 4. Writes the result into `ts_output_dir`
 5. Deletes the temporary `proto/` and generated directories
-
-## MCP Client Example
-
-```json
-{
-  "mcpServers": {
-    "proto-to-ts": {
-      "command": "node",
-      "args": [
-        "C:\\path\\to\\node_modules\\@d-matrix\\proto-to-ts\\dist\\index.js"
-      ],
-      "cwd": "C:\\path\\to\\node_modules\\@d-matrix\\proto-to-ts"
-    }
-  }
-}
-```
 
 ## Example Tool Call
 
