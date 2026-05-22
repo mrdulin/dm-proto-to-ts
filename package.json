@@ -48,7 +48,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@d-matrix/proto-to-ts": "^0.1.0",
     "@modelcontextprotocol/sdk": "^1.17.5",
     "zod": "^3.25.76"
   },
