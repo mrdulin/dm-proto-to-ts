@@ -24,7 +24,7 @@
 
 ## 现状
 
-当前项目通过 [src/index.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/index.ts) 启动 MCP Server，并在 [src/tools/register-proto-tools.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/tools/register-proto-tools.ts) 中注册 `proto_to_ts` 工具。实际生成逻辑集中在 [src/services/proto-generator.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/services/proto-generator.ts)，其内部通过 `npm run _gen_proto` 调用 [scripts/gen-proto.mjs](/D:/workspace/mrdulin/dm-proto-to-ts/scripts/gen-proto.mjs) 执行 `protoc.exe`。
+当前项目通过 [src/index.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/index.ts) 启动 MCP Server，并在 [src/tools/register-proto-tools.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/tools/register-proto-tools.ts) 中注册 `proto_to_ts` 工具。实际生成逻辑集中在 [src/services/proto-generator.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/services/proto-generator.ts)，其内部目前通过 `npm run _gen_proto` 间接调用 [scripts/gen-proto.mjs](/D:/workspace/mrdulin/dm-proto-to-ts/scripts/gen-proto.mjs) 执行 `protoc.exe`。
 
 这意味着改造重点不是重写生成链路，而是：
 
@@ -126,7 +126,7 @@ CLI 启动时先检查 `process.platform`：
 需要调整的点：
 
 - 去掉与 MCP 强绑定的命名和文案，例如临时目录前缀中的 `mcp`。
-- 保持调用链仍然使用 `npm run _gen_proto`，避免扩大改动范围。
+- 移除 `_gen_proto` npm script，改为由服务层直接调用 `node scripts/gen-proto.mjs`。
 - 校验必需文件时固定检查仓库内的 `protoc.exe`。
 
 ### 4. MCP 代码移除
@@ -147,6 +147,7 @@ CLI 启动时先检查 `process.platform`：
 - `description` 改为 CLI 工具描述。
 - `bin` 映射保留 `proto-to-ts`。
 - `keywords` 去掉 `mcp`，保留 CLI 相关关键词。
+- 删除 `_gen_proto` script。
 - `start`、`dev` 等脚本改成符合 CLI 场景的描述或执行方式。
 
 如果 `dev` 仍有价值，可以保留为 `tsx src/index.ts`，便于本地调试 CLI。
@@ -177,7 +178,7 @@ CLI 启动时先检查 `process.platform`：
 3. 输入文件不是 `.proto`。
 4. 输入文件不存在。
 5. 内置 `protoc.exe` 或生成脚本缺失。
-6. `npm run _gen_proto` 执行失败。
+6. `node scripts/gen-proto.mjs` 执行失败。
 7. 生成完成后找不到目标 `.ts` 文件。
 
 错误输出原则：
@@ -200,6 +201,6 @@ CLI 启动时先检查 `process.platform`：
 
 ## 风险与边界
 
-1. 当前生成流程仍依赖 `npm run _gen_proto`，因此 CLI 入口虽然改造完成，但底层调用链仍与 npm script 耦合。这是可接受的最小改动，不在本次拆解范围内。
+1. 当前生成流程仍保留 `scripts/gen-proto.mjs` 这一层内部脚本，因此 CLI 入口虽然简化，但生成链路依旧是“入口 + 服务层 + 脚本”的结构。这是可接受的最小改动，不在本次继续下沉范围内。
 2. 仅支持 Windows，意味着 `npx` 在其他平台会立即失败。这需要在 README 中明确提示，避免误用。
 3. 本次不新增自动化测试框架，因此验证主要依赖构建、类型检查和一次真实 CLI 运行。
