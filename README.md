@@ -5,7 +5,7 @@
 ## 平台要求
 
 - Windows
-- Node.js 18 或更高版本
+- Node.js 16.13 或更高版本
 
 ## 使用方式
 
@@ -104,6 +104,7 @@ npx @d-matrix/proto-to-ts <proto-file> <output-dir>
 npm install
 npm run build
 npm run typecheck
+npm test
 ```
 
 构建后可直接运行：

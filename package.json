@@ -16,11 +16,11 @@
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "npm run build && tsx src/index.ts",
+    "dev": "npm run build && node dist/index.js",
     "prepublishOnly": "npm run build",
     "postpublish": "echo \"wait for 3 seconds, then sync cnpm\" && npm run wait3s && npm run cnpm:sync",
     "start": "node dist/index.js",
-    "test": "npm run build && node --test dist/proto-generator.test.js",
+    "test": "npm run build && mocha \"dist/services/**/*.test.js\"",
     "wait3s": "node -e \"setTimeout(() => process.exit(0), 3000)\"",
     "cnpm:sync": "cnpm sync %npm_package_name%",
     "typecheck": "tsc -p tsconfig.json --noEmit"
@@ -32,7 +32,7 @@
   ],
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=16.13"
   },
   "repository": {
     "type": "git",
@@ -49,9 +49,10 @@
     "ts-proto": "^1.181.2"
   },
   "devDependencies": {
-    "@types/node": "^22.15.30",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^16.18.0",
     "cnpm": "^9.4.0",
-    "tsx": "^4.19.4",
+    "mocha": "^10.0.0",
     "typescript": "^5.8.3"
   }
 }
