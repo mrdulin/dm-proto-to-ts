@@ -8,13 +8,15 @@ const currentDirectory = path.dirname(currentFilePath);
 const projectRoot = path.resolve(currentDirectory, "..");
 const protoInputEnv = process.env.PROTO_TS_INPUT_DIR;
 const protoOutputEnv = process.env.PROTO_TS_OUTPUT_DIR;
+const protoEntryEnv = process.env.PROTO_TS_ENTRY_FILE;
 
-if (!protoInputEnv || !protoOutputEnv) {
-  throw new Error("PROTO_TS_INPUT_DIR 和 PROTO_TS_OUTPUT_DIR 是必需的。");
+if (!protoInputEnv || !protoOutputEnv || !protoEntryEnv) {
+  throw new Error("PROTO_TS_INPUT_DIR、PROTO_TS_OUTPUT_DIR 和 PROTO_TS_ENTRY_FILE 是必需的。");
 }
 
 const protoDirectory = path.resolve(protoInputEnv);
 const outputDirectory = path.resolve(protoOutputEnv);
+const entryProtoFilePath = path.resolve(protoDirectory, protoEntryEnv);
 const protocBinary = path.join(projectRoot, "protoc.exe");
 const tsProtoPlugin = path.join(
   projectRoot,
@@ -26,15 +28,7 @@ const tsProtoPlugin = path.join(
 async function run(): Promise<void> {
   await fs.access(protocBinary);
   await fs.access(tsProtoPlugin);
-
-  const protoEntries = await fs.readdir(protoDirectory, { withFileTypes: true });
-  const protoFiles = protoEntries
-    .filter((entry) => entry.isFile() && entry.name.endsWith(".proto"))
-    .map((entry) => path.join(protoDirectory, entry.name));
-
-  if (protoFiles.length === 0) {
-    throw new Error(`在 ${protoDirectory} 中没有找到 .proto 文件。`);
-  }
+  await fs.access(entryProtoFilePath);
 
   await fs.mkdir(outputDirectory, { recursive: true });
 
@@ -47,7 +41,7 @@ async function run(): Promise<void> {
     "--ts_proto_opt=outputJsonMethods=false",
     "--ts_proto_opt=outputPartialMethods=false",
     "--ts_proto_opt=esModuleInterop=true",
-    ...protoFiles,
+    entryProtoFilePath,
   ];
 
   await new Promise<void>((resolve, reject) => {

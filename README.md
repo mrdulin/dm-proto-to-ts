@@ -15,10 +15,17 @@
 npx @d-matrix/proto-to-ts ./proto/ping.proto ./output
 ```
 
-如果已经全局或本地安装，也可以直接调用二进制命令：
+如果已经全局安装，也可以直接调用二进制命令：
 
 ```bash
 proto-to-ts ./proto/ping.proto ./output
+```
+
+如果是本地安装，推荐使用 `npx` 或 `npm exec`：
+
+```bash
+npx @d-matrix/proto-to-ts ./proto/ping.proto ./output
+npm exec proto-to-ts ./proto/ping.proto ./output
 ```
 
 ## 命令格式
