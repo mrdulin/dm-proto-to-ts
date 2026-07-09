@@ -1,33 +1,31 @@
-import { promises as fs } from "node:fs";
 import { spawn } from "node:child_process";
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const currentFilePath = fileURLToPath(import.meta.url);
-const scriptsDirectory = path.dirname(currentFilePath);
-const projectRoot = path.resolve(scriptsDirectory, "..");
+const currentDirectory = path.dirname(currentFilePath);
+const projectRoot = path.resolve(currentDirectory, "..");
 const protoInputEnv = process.env.PROTO_TS_INPUT_DIR;
 const protoOutputEnv = process.env.PROTO_TS_OUTPUT_DIR;
 
 if (!protoInputEnv || !protoOutputEnv) {
-  throw new Error("PROTO_TS_INPUT_DIR and PROTO_TS_OUTPUT_DIR are required.");
+  throw new Error("PROTO_TS_INPUT_DIR 和 PROTO_TS_OUTPUT_DIR 是必需的。");
 }
 
 const protoDirectory = path.resolve(protoInputEnv);
 const outputDirectory = path.resolve(protoOutputEnv);
+const protocBinary = path.join(projectRoot, "protoc.exe");
+const tsProtoPlugin = path.join(
+  projectRoot,
+  "node_modules",
+  ".bin",
+  "protoc-gen-ts_proto.cmd",
+);
 
-const protocBinary =
-  process.platform === "win32"
-    ? path.join(projectRoot, "protoc.exe")
-    : path.join(projectRoot, "protoc");
-
-const tsProtoPlugin =
-  process.platform === "win32"
-    ? path.join(projectRoot, "node_modules", ".bin", "protoc-gen-ts_proto.cmd")
-    : path.join(projectRoot, "node_modules", ".bin", "protoc-gen-ts_proto");
-
-async function run() {
+async function run(): Promise<void> {
   await fs.access(protocBinary);
+  await fs.access(tsProtoPlugin);
 
   const protoEntries = await fs.readdir(protoDirectory, { withFileTypes: true });
   const protoFiles = protoEntries
@@ -35,7 +33,7 @@ async function run() {
     .map((entry) => path.join(protoDirectory, entry.name));
 
   if (protoFiles.length === 0) {
-    throw new Error(`No .proto files found in ${protoDirectory}`);
+    throw new Error(`在 ${protoDirectory} 中没有找到 .proto 文件。`);
   }
 
   await fs.mkdir(outputDirectory, { recursive: true });
@@ -52,7 +50,7 @@ async function run() {
     ...protoFiles,
   ];
 
-  await new Promise((resolve, reject) => {
+  await new Promise<void>((resolve, reject) => {
     const child = spawn(protocBinary, args, {
       cwd: projectRoot,
       stdio: "inherit",
@@ -69,7 +67,7 @@ async function run() {
         return;
       }
 
-      reject(new Error(`protoc failed with exit code ${code ?? -1}`));
+      reject(new Error(`protoc 执行失败，退出码：${code ?? -1}`));
     });
   });
 }

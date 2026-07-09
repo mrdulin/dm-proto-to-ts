@@ -1,98 +1,106 @@
 # proto-to-ts
 
-A TypeScript `stdio` MCP server that reads a user-provided `.proto` file path, runs `npm run _gen_proto` in a temporary `proto/` directory, and writes the generated TypeScript file into a user-specified output directory. Temporary proto and generated directories are removed after completion.
+`@d-matrix/proto-to-ts` 是一个仅支持 Windows 的 Node CLI，用于将单个 `.proto` 文件生成到指定输出目录中的 TypeScript 文件。
 
-## Package
+## 平台要求
+
+- Windows
+- Node.js 18 或更高版本
+
+## 使用方式
+
+推荐直接通过 `npx` 执行：
 
 ```bash
-npm install @d-matrix/proto-to-ts
+npx @d-matrix/proto-to-ts ./proto/ping.proto ./output
 ```
 
-Requirements:
+如果已经全局或本地安装，也可以直接调用二进制命令：
 
-- Node.js 18 or newer
-- `protoc.exe` placed in the package root on Windows deployments
-
-## Features
-
-- Accepts a `.proto` file path
-- Accepts a user-specified TypeScript output directory
-- Internally runs `npm run _gen_proto`
-- Uses `protoc.exe` from the package root together with local `ts-proto`
-- Does not keep `proto/` or generated artifacts inside the project
-- Writes the generated `.ts` file into the requested output directory
-
-## Usage
-
-### Prerequisites
-
-- Node.js 18 or higher is required.
-
-### Desktop Applications (stdio transport)
-
-To use with Desktop APP, such as Claude, VSCode, Cline, Cherry Studio, and so on, add the MCP server config below.
-
-On Window system:
-
-```json
-{
-  "mcpServers": {
-    "proto-to-ts": {
-      "command": "cmd",
-      "args": [
-        "/c",
-        "npx",
-        "-y",
-        "-p",
-        "@d-matrix/proto-to-ts",
-        "proto-to-ts"
-      ]
-    }
-  }
-}
+```bash
+proto-to-ts ./proto/ping.proto ./output
 ```
 
-## Local Development
+## 命令格式
+
+```bash
+proto-to-ts <proto-file> <output-dir>
+```
+
+参数说明：
+
+- `proto-file`：输入的 `.proto` 文件路径，支持相对路径和绝对路径
+- `output-dir`：生成后的 `.ts` 文件输出目录
+
+## CLI 选项
+
+查看帮助：
+
+```bash
+npx @d-matrix/proto-to-ts --help
+```
+
+查看版本：
+
+```bash
+npx @d-matrix/proto-to-ts --version
+```
+
+## 运行结果
+
+命令执行成功后，会输出：
+
+- 实际读取的 Proto 文件绝对路径
+- 实际输出目录绝对路径
+- 最终生成的 TypeScript 文件绝对路径
+
+生成规则：
+
+- 输入 `ping.proto`
+- 输出文件名固定为 `ping.ts`
+
+## 工作方式
+
+工具内部会：
+
+1. 校验输入的 `.proto` 文件路径
+2. 创建临时 Proto 输入目录和临时生成目录
+3. 调用包内置的 `protoc.exe` 和本地 `ts-proto`
+4. 将生成后的 `.ts` 文件复制到你指定的输出目录
+5. 清理临时目录
+
+## 常见错误
+
+### 当前版本仅支持 Windows 平台
+
+当前版本不会在 macOS 或 Linux 上运行。请在 Windows 环境中使用。
+
+### 参数数量不正确
+
+请确认命令格式为：
+
+```bash
+npx @d-matrix/proto-to-ts <proto-file> <output-dir>
+```
+
+### 输入文件不是 `.proto`
+
+请确认第一个参数指向一个真实存在的 `.proto` 文件。
+
+### 找不到生成结果
+
+通常意味着 `protoc.exe` 执行失败，或 `.proto` 文件内容本身存在问题。请根据命令输出中的错误信息排查。
+
+## 本地开发
 
 ```bash
 npm install
 npm run build
-npm start
+npm run typecheck
 ```
 
-Development mode:
+构建后可直接运行：
 
 ```bash
-npm run dev
+node dist/index.js ./proto/ping.proto ./output
 ```
-
-## MCP Tool
-
-### `proto_to_ts`
-
-Input arguments:
-
-- `proto_file_name`: `.proto` file path, absolute or relative
-- `ts_output_dir`: output directory for the generated `.ts` file
-
-Behavior:
-
-1. Reads the user-provided `.proto` file
-2. Runs the internal `npm run _gen_proto` command in temporary directories
-3. Calls `<package-root>/protoc.exe` with the `ts-proto` plugin to generate `<name>.ts`
-4. Writes the result into `ts_output_dir`
-5. Deletes the temporary `proto/` and generated directories
-
-## Example Tool Call
-
-```json
-{
-  "name": "proto_to_ts",
-  "arguments": {
-    "proto_file_name": "C:\\path\\to\\proto\\ping.proto",
-    "ts_output_dir": "C:\\path\\to\\output"
-  }
-}
-```
-
-The tool returns the final output file path and writes the generated TypeScript file into the requested directory.

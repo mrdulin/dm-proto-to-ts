@@ -3,11 +3,7 @@ import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-import {
-  DEFAULT_PROJECT_ROOT,
-  INTERNAL_GENERATION_COMMAND,
-  MAX_OUTPUT_CHARS,
-} from "../constants.js";
+import { DEFAULT_PROJECT_ROOT, MAX_OUTPUT_CHARS } from "../constants.js";
 import type { CommandExecutionResult, GenerationResult } from "../types.js";
 
 function trimOutput(output: string): string {
@@ -18,10 +14,22 @@ function trimOutput(output: string): string {
   return `${output.slice(0, MAX_OUTPUT_CHARS)}\n...<truncated>`;
 }
 
-function resolveCommand(): { command: string; args: string[] } {
-  return process.platform === "win32"
-    ? { command: "cmd.exe", args: ["/c", "npm.cmd", "run", "_gen_proto"] }
-    : { command: "npm", args: ["run", "_gen_proto"] };
+function resolveGenerationScriptPath(projectRoot: string): string {
+  return path.join(projectRoot, "dist", "gen-proto.js");
+}
+
+function resolveCommand(projectRoot: string): {
+  command: string;
+  args: string[];
+  displayCommand: string;
+} {
+  const generationScriptPath = resolveGenerationScriptPath(projectRoot);
+
+  return {
+    command: process.execPath,
+    args: [generationScriptPath],
+    displayCommand: `node ${path.relative(projectRoot, generationScriptPath)}`,
+  };
 }
 
 function resolveProtoInputPath(protoFileName: string): string {
@@ -43,11 +51,8 @@ function resolveOutputDirectory(tsOutputDir: string): string {
 
 async function assertProjectIsUsable(projectRoot: string): Promise<void> {
   const packageJsonPath = path.join(projectRoot, "package.json");
-  const generatorScriptPath = path.join(projectRoot, "scripts", "gen-proto.mjs");
-  const protocPath =
-    process.platform === "win32"
-      ? path.join(projectRoot, "protoc.exe")
-      : path.join(projectRoot, "protoc");
+  const generatorScriptPath = resolveGenerationScriptPath(projectRoot);
+  const protocPath = path.join(projectRoot, "protoc.exe");
 
   for (const filePath of [packageJsonPath, generatorScriptPath, protocPath]) {
     try {
@@ -75,10 +80,10 @@ async function executeCommand(input: {
   projectRoot: string;
   protoDirectory: string;
   outputDirectory: string;
-}): Promise<CommandExecutionResult> {
-  const resolved = resolveCommand();
+}): Promise<CommandExecutionResult & { displayCommand: string }> {
+  const resolved = resolveCommand(input.projectRoot);
 
-  return new Promise<CommandExecutionResult>((resolve, reject) => {
+  return new Promise<CommandExecutionResult & { displayCommand: string }>((resolve, reject) => {
     const child = spawn(resolved.command, resolved.args, {
       cwd: input.projectRoot,
       env: {
@@ -110,6 +115,7 @@ async function executeCommand(input: {
         exitCode: exitCode ?? -1,
         stdout: trimOutput(stdout),
         stderr: trimOutput(stderr),
+        displayCommand: resolved.displayCommand,
       });
     });
   });
@@ -132,7 +138,7 @@ export class ProtoGeneratorService {
     await assertProjectIsUsable(this.projectRoot);
     await assertProtoInputExists(protoFilePath);
 
-    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "proto-to-ts-mcp-"));
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "proto-to-ts-"));
     const tempProtoDirectory = path.join(tempRoot, "proto");
     const tempOutputDirectory = path.join(tempRoot, "generated");
     const protoBaseName = path.basename(protoFilePath);
@@ -156,7 +162,7 @@ export class ProtoGeneratorService {
       if (commandResult.exitCode !== 0) {
         throw new Error(
           [
-            `执行 ${INTERNAL_GENERATION_COMMAND} 失败，exitCode=${commandResult.exitCode}。`,
+            `执行 ${commandResult.displayCommand} 失败，exitCode=${commandResult.exitCode}。`,
             commandResult.stderr ? `stderr:\n${commandResult.stderr}` : "",
             commandResult.stdout ? `stdout:\n${commandResult.stdout}` : "",
           ]

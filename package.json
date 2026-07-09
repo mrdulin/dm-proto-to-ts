@@ -1,25 +1,22 @@
 {
   "name": "@d-matrix/proto-to-ts",
   "version": "0.2.3",
-  "description": "MCP server for generating TypeScript from .proto files into a user-specified output directory.",
+  "description": "Windows-only Node CLI for generating TypeScript from .proto files into a user-specified output directory.",
   "author": "Lin Du",
   "type": "module",
-  "main": "dist/index.js",
   "bin": {
     "proto-to-ts": "./bin/proto-to-ts.js"
   },
   "files": [
     "bin",
     "dist",
-    "scripts",
     "protoc.exe",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "dev": "tsx src/index.ts",
-    "_gen_proto": "node ./scripts/gen-proto.mjs",
+    "dev": "npm run build && tsx src/index.ts",
     "prepublishOnly": "npm run build",
     "postpublish": "echo \"wait for 3 seconds, then sync cnpm\" && npm run wait3s && npm run cnpm:sync",
     "start": "node dist/index.js",
@@ -28,7 +25,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "keywords": [
-    "mcp",
+    "cli",
     "proto",
     "typescript"
   ],
@@ -48,8 +45,6 @@
     "access": "public"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.5",
-    "zod": "^3.25.76",
     "ts-proto": "^1.181.2"
   },
   "devDependencies": {
