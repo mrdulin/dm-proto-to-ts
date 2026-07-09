@@ -1,6 +1,6 @@
 {
   "name": "@d-matrix/proto-to-ts",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "description": "Windows-only Node CLI for generating TypeScript from .proto files into a user-specified output directory.",
   "author": "Lin Du",
   "type": "module",
