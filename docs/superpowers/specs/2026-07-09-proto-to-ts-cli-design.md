@@ -8,6 +8,7 @@
 
 - 允许修改：
   - `src/`
+  - `scripts/`
   - `bin/`
   - `package.json`
   - `package-lock.json`
@@ -48,6 +49,7 @@
 缺点：
 
 - 服务层里会残留部分 MCP 命名和文案，需要顺手清理。
+- 生成脚本仍停留在 `scripts/` 下，与编译产物分离。
 
 ### 方案 B：CLI 入口加一层独立命令适配
 
@@ -82,7 +84,7 @@
 
 **推荐方案：方案 A。**
 
-理由：当前生成逻辑已经集中在服务层，入口层替换为 CLI 即可满足目标，能够以最小改动完成改造，并避免引入无必要的新抽象。
+理由：当前生成逻辑已经集中在服务层，入口层替换为 CLI 即可满足目标；同时将内部生成脚本迁移到 `src/` 并纳入编译产物，可以在不引入额外抽象的前提下让发布结构更一致。
 
 ## 目标设计
 
@@ -126,8 +128,24 @@ CLI 启动时先检查 `process.platform`：
 需要调整的点：
 
 - 去掉与 MCP 强绑定的命名和文案，例如临时目录前缀中的 `mcp`。
-- 移除 `_gen_proto` npm script，改为由服务层直接调用 `node scripts/gen-proto.mjs`。
+- 移除 `_gen_proto` npm script。
+- 将 [scripts/gen-proto.mjs](/D:/workspace/mrdulin/dm-proto-to-ts/scripts/gen-proto.mjs) 迁移到 `src/`，并改造成 TypeScript 内部脚本。
+- 由服务层直接调用编译后的内部脚本，例如 `node dist/.../gen-proto.js`，不再依赖源码目录下的脚本文件。
 - 校验必需文件时固定检查仓库内的 `protoc.exe`。
+
+### 3.1 内部生成脚本迁移
+
+内部生成脚本需要从源码外脚本迁移到 `src/`，目标是让运行时完全基于已发布的编译产物工作。
+
+迁移目标：
+
+- 删除 [scripts/gen-proto.mjs](/D:/workspace/mrdulin/dm-proto-to-ts/scripts/gen-proto.mjs)。
+- 在 `src/` 下新增对应的 TypeScript 文件，用于承接 `protoc` 调用逻辑。
+- 构建后在 `dist/` 中生成对应的可执行脚本，供 [src/services/proto-generator.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/services/proto-generator.ts) 调用。
+
+这样运行链路会变为：
+
+`CLI -> ProtoGeneratorService -> node dist/<internal-script>.js -> protoc.exe`
 
 ### 4. MCP 代码移除
 
@@ -148,6 +166,7 @@ CLI 启动时先检查 `process.platform`：
 - `bin` 映射保留 `proto-to-ts`。
 - `keywords` 去掉 `mcp`，保留 CLI 相关关键词。
 - 删除 `_gen_proto` script。
+- 从发布文件列表中移除 `scripts` 目录。
 - `start`、`dev` 等脚本改成符合 CLI 场景的描述或执行方式。
 
 如果 `dev` 仍有价值，可以保留为 `tsx src/index.ts`，便于本地调试 CLI。
@@ -177,8 +196,8 @@ CLI 启动时先检查 `process.platform`：
 2. 缺少参数或参数数量不正确。
 3. 输入文件不是 `.proto`。
 4. 输入文件不存在。
-5. 内置 `protoc.exe` 或生成脚本缺失。
-6. `node scripts/gen-proto.mjs` 执行失败。
+5. 内置 `protoc.exe` 或内部生成脚本缺失。
+6. `node dist/.../gen-proto.js` 执行失败。
 7. 生成完成后找不到目标 `.ts` 文件。
 
 错误输出原则：
@@ -201,6 +220,6 @@ CLI 启动时先检查 `process.platform`：
 
 ## 风险与边界
 
-1. 当前生成流程仍保留 `scripts/gen-proto.mjs` 这一层内部脚本，因此 CLI 入口虽然简化，但生成链路依旧是“入口 + 服务层 + 脚本”的结构。这是可接受的最小改动，不在本次继续下沉范围内。
+1. 当前生成流程仍保留“入口 + 服务层 + 内部脚本”的结构，但内部脚本会迁移到 `src/` 并随构建一起发布，因此运行时不再依赖源码目录。这是本次接受的最终形态，不继续下沉到单文件实现。
 2. 仅支持 Windows，意味着 `npx` 在其他平台会立即失败。这需要在 README 中明确提示，避免误用。
 3. 本次不新增自动化测试框架，因此验证主要依赖构建、类型检查和一次真实 CLI 运行。
