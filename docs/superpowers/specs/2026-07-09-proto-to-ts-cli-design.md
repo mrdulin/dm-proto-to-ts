@@ -140,8 +140,14 @@ CLI 启动时先检查 `process.platform`：
 迁移目标：
 
 - 删除 [scripts/gen-proto.mjs](/D:/workspace/mrdulin/dm-proto-to-ts/scripts/gen-proto.mjs)。
-- 在 `src/` 下新增对应的 TypeScript 文件，用于承接 `protoc` 调用逻辑。
+- 在 `src/` 下新增一个对应的 TypeScript 文件，用于承接 `protoc` 调用逻辑。
 - 构建后在 `dist/` 中生成对应的可执行脚本，供 [src/services/proto-generator.ts](/D:/workspace/mrdulin/dm-proto-to-ts/src/services/proto-generator.ts) 调用。
+
+约束：
+
+- 不为这层脚本额外拆分多个辅助模块。
+- 不引入新的命令封装层、脚本调度层或插件式抽象。
+- 以“单文件、职责单一、逻辑平移”为原则完成迁移，只做与 TypeScript 化和路径调整直接相关的改动。
 
 这样运行链路会变为：
 
@@ -222,4 +228,5 @@ CLI 启动时先检查 `process.platform`：
 
 1. 当前生成流程仍保留“入口 + 服务层 + 内部脚本”的结构，但内部脚本会迁移到 `src/` 并随构建一起发布，因此运行时不再依赖源码目录。这是本次接受的最终形态，不继续下沉到单文件实现。
 2. 仅支持 Windows，意味着 `npx` 在其他平台会立即失败。这需要在 README 中明确提示，避免误用。
-3. 本次不新增自动化测试框架，因此验证主要依赖构建、类型检查和一次真实 CLI 运行。
+3. `src/` 下的内部脚本不做过度设计，后续如果再出现复用需求，再考虑拆分。
+4. 本次不新增自动化测试框架，因此验证主要依赖构建、类型检查和一次真实 CLI 运行。
